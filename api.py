@@ -143,11 +143,15 @@ async def health():
     return {
         "status": "ok",
         "model": "VQC",
-        "qubits": _vqc.n,
-        "layers": _vqc.L,
-        "parameters": _vqc.weights.size,
+        "qubits": int(_vqc.n),
+        "layers": int(_vqc.L),
+        "parameters": int(_vqc.weights.size),
         "supabase": SUPA_URL
     }
+
+@app.get("/")
+async def root():
+    return {"status": "ok", "name": "NeuroLens QML API", "version": "1.0.0"}
 
 
 @app.post("/predict", response_model=PredictResponse)
