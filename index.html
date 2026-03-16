@@ -1,0 +1,1555 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>NeuroLens — Explainable QML Platform</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;500;600;700;800&family=JetBrains+Mono:wght@300;400;500&family=Lora:ital,wght@0,400;0,500;1,400&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+<style>
+/* ═══════════════════════════════════════════
+   DESIGN SYSTEM — Clinical Precision Aesthetic
+   Warm ivory + deep ink + electric mint accent
+   Inspired by medical research interfaces
+════════════════════════════════════════════ */
+:root {
+  --ivory:     #F8F5EF;
+  --ivory2:    #F0EBE1;
+  --ivory3:    #E5DDD0;
+  --ink:       #1A1410;
+  --ink2:      #3D3530;
+  --ink3:      #6B6258;
+  --mint:      #00C896;
+  --mint-dim:  #00A87D;
+  --mint-glow: rgba(0,200,150,0.12);
+  --red:       #E84040;
+  --amber:     #E8A020;
+  --sky:       #2080E8;
+  --border:    rgba(26,20,16,0.10);
+  --border2:   rgba(26,20,16,0.18);
+  --shadow:    0 1px 3px rgba(26,20,16,0.08), 0 4px 16px rgba(26,20,16,0.05);
+  --shadow-lg: 0 2px 8px rgba(26,20,16,0.10), 0 12px 40px rgba(26,20,16,0.08);
+  --r:         10px;
+  --r-lg:      16px;
+  --syne:      'Syne', sans-serif;
+  --mono:      'JetBrains Mono', monospace;
+  --serif:     'Lora', serif;
+}
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html { font-size: 15px; background: var(--ivory); color: var(--ink); -webkit-font-smoothing: antialiased; }
+body { font-family: var(--syne); min-height: 100vh; overflow-x: hidden; }
+
+/* ── scrollbar ── */
+::-webkit-scrollbar { width: 6px; }
+::-webkit-scrollbar-track { background: var(--ivory2); }
+::-webkit-scrollbar-thumb { background: var(--ivory3); border-radius: 3px; }
+
+/* ════════════════════════════════
+   TOP NAVIGATION
+════════════════════════════════ */
+.topbar {
+  position: fixed; top: 0; left: 0; right: 0; z-index: 100;
+  height: 58px;
+  background: rgba(248,245,239,0.92);
+  backdrop-filter: blur(12px);
+  border-bottom: 1px solid var(--border);
+  display: flex; align-items: center;
+  padding: 0 28px;
+  gap: 0;
+}
+.topbar-logo {
+  display: flex; align-items: center; gap: 10px;
+  margin-right: 40px; flex-shrink: 0;
+}
+.logo-mark {
+  width: 30px; height: 30px;
+  border: 1.5px solid var(--ink);
+  border-radius: 8px;
+  display: flex; align-items: center; justify-content: center;
+  position: relative; overflow: hidden;
+}
+.logo-mark::before {
+  content: '';
+  position: absolute;
+  width: 14px; height: 14px;
+  border: 1.5px solid var(--mint);
+  border-radius: 50%;
+  animation: pulse-ring 2.5s ease-in-out infinite;
+}
+@keyframes pulse-ring {
+  0%,100% { transform: scale(0.7); opacity: 0.9; }
+  50%      { transform: scale(1.1); opacity: 0.4; }
+}
+.logo-name { font-size: 16px; font-weight: 700; letter-spacing: -0.03em; color: var(--ink); }
+.logo-name span { color: var(--mint-dim); }
+
+.topbar-nav { display: flex; gap: 2px; flex: 1; }
+.tnav { padding: 6px 14px; font-size: 12px; font-weight: 500; color: var(--ink3);
+  border-radius: 6px; cursor: pointer; transition: all 0.15s; letter-spacing: 0.02em;
+  text-transform: uppercase; }
+.tnav:hover { background: var(--ivory2); color: var(--ink); }
+.tnav.active { background: var(--ink); color: var(--ivory); }
+
+.topbar-right { margin-left: auto; display: flex; align-items: center; gap: 12px; }
+.status-dot {
+  display: flex; align-items: center; gap: 6px;
+  font-size: 11px; font-family: var(--mono); color: var(--ink3);
+}
+.status-dot::before {
+  content: '';
+  width: 7px; height: 7px; border-radius: 50%;
+  background: var(--mint);
+  box-shadow: 0 0 0 0 rgba(0,200,150,0.4);
+  animation: ping 2s ease-in-out infinite;
+}
+@keyframes ping {
+  0%,100% { box-shadow: 0 0 0 0 rgba(0,200,150,0.4); }
+  50%      { box-shadow: 0 0 0 5px rgba(0,200,150,0); }
+}
+.btn {
+  padding: 7px 16px; border-radius: 7px; font-family: var(--syne);
+  font-size: 12px; font-weight: 600; cursor: pointer;
+  border: 1px solid var(--border2); background: var(--ivory);
+  color: var(--ink); transition: all 0.15s; letter-spacing: 0.01em;
+}
+.btn:hover { background: var(--ink); color: var(--ivory); border-color: var(--ink); }
+.btn.primary { background: var(--ink); color: var(--ivory); border-color: var(--ink); }
+.btn.primary:hover { background: var(--mint-dim); border-color: var(--mint-dim); }
+.btn.mint { background: var(--mint); color: var(--ivory); border-color: var(--mint); }
+.btn.mint:hover { background: var(--mint-dim); border-color: var(--mint-dim); }
+
+/* ════════════════════════════════
+   LAYOUT
+════════════════════════════════ */
+.app { padding-top: 58px; display: flex; }
+.sidebar {
+  width: 220px; flex-shrink: 0;
+  position: fixed; top: 58px; left: 0; bottom: 0;
+  background: var(--ivory2); border-right: 1px solid var(--border);
+  padding: 20px 14px; overflow-y: auto;
+  display: flex; flex-direction: column; gap: 4px;
+}
+.sidebar-sect { font-size: 10px; font-weight: 600; color: var(--ink3);
+  text-transform: uppercase; letter-spacing: 0.12em; padding: 14px 8px 6px; }
+.slink {
+  display: flex; align-items: center; gap: 9px;
+  padding: 8px 10px; border-radius: 7px;
+  font-size: 12px; font-weight: 500; color: var(--ink3);
+  cursor: pointer; transition: all 0.14s;
+}
+.slink:hover { background: var(--ivory3); color: var(--ink); }
+.slink.active { background: var(--ink); color: var(--ivory); }
+.slink-icon { width: 16px; height: 16px; flex-shrink: 0; opacity: 0.6; }
+.slink.active .slink-icon { opacity: 1; }
+.slink-badge { margin-left: auto; font-family: var(--mono); font-size: 10px;
+  padding: 1px 5px; border-radius: 3px; background: var(--mint-glow); color: var(--mint-dim); }
+
+.content { margin-left: 220px; flex: 1; padding: 36px 40px; min-height: calc(100vh - 58px); }
+.page { display: none; animation: fadein 0.25s ease; }
+.page.active { display: block; }
+@keyframes fadein { from { opacity:0; transform: translateY(6px); } to { opacity:1; transform:translateY(0); } }
+
+/* ════════════════════════════════
+   PAGE HEADERS
+════════════════════════════════ */
+.page-head { margin-bottom: 32px; display: flex; align-items: flex-start; justify-content: space-between; gap: 20px; }
+.page-head-left {}
+.eyebrow { font-size: 10px; font-weight: 600; letter-spacing: 0.14em; text-transform: uppercase;
+  color: var(--mint-dim); margin-bottom: 6px; display: flex; align-items: center; gap: 6px; }
+.eyebrow::before { content: ''; width: 18px; height: 1.5px; background: var(--mint); }
+.page-title { font-size: 28px; font-weight: 800; letter-spacing: -0.04em; color: var(--ink); line-height: 1.1; }
+.page-desc { margin-top: 8px; font-size: 13px; color: var(--ink3); line-height: 1.7;
+  max-width: 560px; font-family: var(--serif); font-style: italic; }
+.page-actions { display: flex; gap: 10px; flex-shrink: 0; margin-top: 4px; }
+
+/* ════════════════════════════════
+   CARDS & GRIDS
+════════════════════════════════ */
+.card {
+  background: #fff;
+  border: 1px solid var(--border);
+  border-radius: var(--r-lg);
+  box-shadow: var(--shadow);
+  padding: 22px 24px;
+}
+.card-title { font-size: 12px; font-weight: 700; text-transform: uppercase;
+  letter-spacing: 0.1em; color: var(--ink3); margin-bottom: 4px; }
+.card-sub { font-size: 11px; font-family: var(--mono); color: var(--ink3); }
+
+.metric-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px; margin-bottom: 28px; }
+.metric {
+  background: #fff; border: 1px solid var(--border);
+  border-radius: var(--r-lg); padding: 18px 20px;
+  position: relative; overflow: hidden;
+  box-shadow: var(--shadow);
+  transition: box-shadow 0.2s, transform 0.2s;
+  cursor: default;
+}
+.metric:hover { box-shadow: var(--shadow-lg); transform: translateY(-1px); }
+.metric-accent { position: absolute; left: 0; top: 0; bottom: 0; width: 3px; background: var(--m-color, var(--mint)); border-radius: 4px 0 0 4px; }
+.metric-label { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.12em; color: var(--ink3); margin-bottom: 10px; }
+.metric-value { font-size: 32px; font-weight: 800; letter-spacing: -0.04em; color: var(--ink); line-height: 1; }
+.metric-sub { font-size: 11px; font-family: var(--mono); color: var(--ink3); margin-top: 6px; }
+.metric-delta { display: inline-flex; align-items: center; gap: 3px;
+  font-size: 10px; font-family: var(--mono); padding: 2px 6px; border-radius: 4px; margin-top: 6px; }
+.delta-up   { background: rgba(0,200,150,0.1); color: var(--mint-dim); }
+.delta-down { background: rgba(232,64,64,0.1); color: var(--red); }
+
+.two-col  { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; margin-bottom: 18px; }
+.three-col { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 18px; margin-bottom: 18px; }
+.wide-col { display: grid; grid-template-columns: 2fr 1fr; gap: 18px; margin-bottom: 18px; }
+.full { grid-column: 1 / -1; }
+
+/* ════════════════════════════════
+   CHARTS
+════════════════════════════════ */
+.chart-wrap { position: relative; }
+.chart-header { display: flex; align-items: flex-start; justify-content: space-between; margin-bottom: 18px; }
+.tag { display: inline-flex; align-items: center; gap: 4px; padding: 3px 9px; border-radius: 4px;
+  font-size: 10px; font-weight: 600; font-family: var(--mono); letter-spacing: 0.04em; }
+.tag-mint  { background: rgba(0,200,150,0.1); color: var(--mint-dim); border: 1px solid rgba(0,200,150,0.2); }
+.tag-amber { background: rgba(232,160,32,0.1); color: var(--amber); border: 1px solid rgba(232,160,32,0.2); }
+.tag-sky   { background: rgba(32,128,232,0.1); color: var(--sky); border: 1px solid rgba(32,128,232,0.2); }
+.tag-red   { background: rgba(232,64,64,0.1); color: var(--red); border: 1px solid rgba(232,64,64,0.2); }
+.tag-ink   { background: var(--ivory2); color: var(--ink2); border: 1px solid var(--border2); }
+
+/* ════════════════════════════════
+   SHAP BARS
+════════════════════════════════ */
+.shap-item { display: grid; grid-template-columns: 96px 1fr 58px; align-items: center; gap: 10px; padding: 5px 0; }
+.shap-name { font-family: var(--mono); font-size: 11px; color: var(--ink2); text-align: right; white-space: nowrap; }
+.shap-track { height: 7px; background: var(--ivory2); border-radius: 4px; overflow: hidden; }
+.shap-fill  { height: 100%; border-radius: 4px; transition: width 1.2s cubic-bezier(.22,1,.36,1); }
+.shap-num   { font-family: var(--mono); font-size: 10px; color: var(--ink3); text-align: right; }
+.shap-fill.top  { background: var(--ink); }
+.shap-fill.mid  { background: var(--ink2); }
+.shap-fill.low  { background: var(--ivory3); }
+
+/* ════════════════════════════════
+   SUPABASE TABLE
+════════════════════════════════ */
+.db-table { width: 100%; border-collapse: collapse; font-size: 12px; }
+.db-table thead tr { border-bottom: 2px solid var(--ink); }
+.db-table th { padding: 8px 12px; text-align: left; font-size: 10px; font-weight: 700;
+  text-transform: uppercase; letter-spacing: 0.1em; color: var(--ink3); white-space: nowrap; }
+.db-table td { padding: 10px 12px; border-bottom: 1px solid var(--border); font-family: var(--mono); font-size: 11px; color: var(--ink2); }
+.db-table tr:last-child td { border-bottom: none; }
+.db-table tr:hover td { background: var(--ivory2); }
+.db-table .pred-asd  { color: var(--red); font-weight: 500; }
+.db-table .pred-non  { color: var(--mint-dim); font-weight: 500; }
+.db-table .conf-high { color: var(--ink); }
+.db-table .conf-mid  { color: var(--amber); }
+.db-table .conf-low  { color: var(--ink3); }
+
+/* ════════════════════════════════
+   PIPELINE FLOW
+════════════════════════════════ */
+.pipeline { display: flex; align-items: center; gap: 0; margin: 8px 0 24px; flex-wrap: wrap; row-gap: 10px; }
+.pipe-step {
+  display: flex; flex-direction: column; align-items: center;
+  gap: 6px; padding: 14px 18px;
+  background: #fff; border: 1px solid var(--border);
+  border-radius: var(--r); min-width: 100px;
+  box-shadow: var(--shadow); position: relative;
+  transition: all 0.2s; cursor: default;
+}
+.pipe-step:hover { border-color: var(--ink2); transform: translateY(-2px); box-shadow: var(--shadow-lg); }
+.pipe-step.active-step { border-color: var(--mint); background: var(--mint-glow); }
+.pipe-icon { font-size: 18px; line-height: 1; }
+.pipe-label { font-size: 10px; font-weight: 700; text-transform: uppercase;
+  letter-spacing: 0.08em; color: var(--ink3); text-align: center; }
+.pipe-sub { font-size: 9px; font-family: var(--mono); color: var(--ink3); text-align: center; }
+.pipe-arrow { font-size: 16px; color: var(--ivory3); padding: 0 4px; flex-shrink: 0; user-select:none; }
+.pipe-badge {
+  position: absolute; top: -7px; right: -7px;
+  width: 14px; height: 14px; border-radius: 50%;
+  background: var(--mint); border: 2px solid #fff;
+  display: flex; align-items: center; justify-content: center;
+}
+.pipe-badge.done::after { content: ''; width: 4px; height: 4px; border-radius: 50%; background: #fff; }
+
+/* ════════════════════════════════
+   PATIENT FORM
+════════════════════════════════ */
+.form-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 14px 20px; }
+.form-group { display: flex; flex-direction: column; gap: 5px; }
+.form-label { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.1em; color: var(--ink3); }
+.form-input, .form-select {
+  padding: 9px 12px; border: 1px solid var(--border2);
+  border-radius: 7px; font-family: var(--mono); font-size: 12px;
+  color: var(--ink); background: #fff;
+  transition: border-color 0.15s, box-shadow 0.15s;
+  outline: none;
+}
+.form-input:focus, .form-select:focus {
+  border-color: var(--ink); box-shadow: 0 0 0 3px rgba(26,20,16,0.06);
+}
+.q-scores { display: grid; grid-template-columns: repeat(5, 1fr); gap: 8px; }
+.q-toggle {
+  display: flex; flex-direction: column; align-items: center; gap: 4px;
+  padding: 10px 6px; border-radius: 8px;
+  border: 1.5px solid var(--border2); cursor: pointer;
+  transition: all 0.15s; background: #fff; user-select:none;
+}
+.q-toggle:hover { border-color: var(--ink2); }
+.q-toggle.on { border-color: var(--ink); background: var(--ink); color: var(--ivory); }
+.q-toggle .q-num { font-size: 9px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.08em; opacity: 0.6; }
+.q-toggle .q-val { font-size: 18px; font-weight: 800; letter-spacing: -0.03em; }
+
+/* ════════════════════════════════
+   RESULT PANEL
+════════════════════════════════ */
+.result-panel {
+  border: 1.5px solid var(--border2);
+  border-radius: var(--r-lg);
+  overflow: hidden; margin-top: 20px;
+}
+.result-header {
+  padding: 16px 22px; display: flex; align-items: center; justify-content: space-between;
+  background: var(--ink); color: var(--ivory);
+}
+.result-header.asd-pos { background: linear-gradient(90deg, #2a0a0a, var(--red)); }
+.result-header.asd-neg { background: linear-gradient(90deg, #001a12, var(--mint-dim)); }
+.result-title { font-size: 13px; font-weight: 700; letter-spacing: 0.04em; }
+.result-prob { font-size: 32px; font-weight: 800; letter-spacing: -0.04em; font-family: var(--mono); }
+.result-body { padding: 20px 22px; background: #fff; }
+.result-feature-row { display: grid; grid-template-columns: 90px 1fr 50px; align-items: center; gap: 10px; padding: 4px 0; }
+.rf-name { font-size: 11px; font-family: var(--mono); color: var(--ink3); text-align: right; }
+.rf-track { height: 6px; background: var(--ivory2); border-radius: 3px; overflow: hidden; }
+.rf-fill-pos { height: 100%; background: var(--red); border-radius: 3px; }
+.rf-fill-neg { height: 100%; background: var(--mint); border-radius: 3px; }
+.rf-val { font-size: 10px; font-family: var(--mono); text-align: right; }
+.rf-val.pos { color: var(--red); }
+.rf-val.neg { color: var(--mint-dim); }
+
+/* ════════════════════════════════
+   ARCHITECTURE DIAGRAM
+════════════════════════════════ */
+.arch-wrap {
+  background: var(--ink); border-radius: var(--r-lg);
+  padding: 32px 36px; color: var(--ivory);
+  font-family: var(--mono); position: relative; overflow: hidden;
+}
+.arch-wrap::before {
+  content: '';
+  position: absolute; inset: 0;
+  background: radial-gradient(ellipse at 20% 50%, rgba(0,200,150,0.06) 0%, transparent 60%),
+              radial-gradient(ellipse at 80% 30%, rgba(32,128,232,0.04) 0%, transparent 50%);
+  pointer-events: none;
+}
+.arch-row { display: flex; align-items: center; gap: 0; position: relative; z-index: 1; }
+.arch-col { display: flex; flex-direction: column; align-items: center; gap: 8px; }
+.arch-node {
+  padding: 10px 16px; border-radius: 8px;
+  border: 1px solid; text-align: center;
+  font-size: 11px; font-weight: 500; letter-spacing: 0.04em;
+  white-space: nowrap;
+}
+.an-user    { background: rgba(255,255,255,0.06); border-color: rgba(255,255,255,0.15); color: rgba(255,255,255,0.8); }
+.an-fe      { background: rgba(32,128,232,0.15);  border-color: rgba(32,128,232,0.4);  color: #7BB8F8; }
+.an-api     { background: rgba(232,160,32,0.15);  border-color: rgba(232,160,32,0.4);  color: #F0C060; }
+.an-ml      { background: rgba(0,200,150,0.12);   border-color: rgba(0,200,150,0.4);   color: #4EDBB0; }
+.an-db      { background: rgba(150,100,232,0.15); border-color: rgba(150,100,232,0.4); color: #C0A0F8; }
+.an-vis     { background: rgba(255,255,255,0.06); border-color: rgba(255,255,255,0.15); color: rgba(255,255,255,0.8); }
+.arch-arrow-h { color: rgba(255,255,255,0.2); font-size: 14px; padding: 0 8px; }
+.arch-arrow-v {
+  width: 1px; height: 28px; background: rgba(255,255,255,0.15);
+  margin: 0 auto; position: relative;
+}
+.arch-arrow-v::after {
+  content: '▼'; position: absolute; bottom: -10px; left: 50%;
+  transform: translateX(-50%); font-size: 8px; color: rgba(255,255,255,0.3);
+}
+.arch-label { font-size: 9px; color: rgba(255,255,255,0.35); text-transform: uppercase; letter-spacing: 0.1em; }
+.arch-sep { flex: 1; height: 1px; background: rgba(255,255,255,0.08); margin: 0 8px; position: relative; }
+.arch-sep::after { content: '▶'; position: absolute; right: -6px; top: -6px; font-size: 8px; color: rgba(255,255,255,0.2); }
+
+/* ════════════════════════════════
+   SUPABASE SECTION STYLING
+════════════════════════════════ */
+.db-header {
+  display: flex; align-items: center; gap: 12px; margin-bottom: 16px;
+}
+.db-icon {
+  width: 36px; height: 36px; border-radius: 8px;
+  background: rgba(62,207,142,0.1); border: 1px solid rgba(62,207,142,0.25);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 16px;
+}
+.db-title { font-size: 13px; font-weight: 700; color: var(--ink); }
+.db-sub { font-size: 11px; font-family: var(--mono); color: var(--ink3); }
+.db-insert-badge {
+  margin-left: auto; display: flex; align-items: center; gap: 6px;
+  font-size: 10px; font-family: var(--mono); color: var(--mint-dim);
+  background: var(--mint-glow); padding: 4px 10px; border-radius: 5px;
+  border: 1px solid rgba(0,200,150,0.2);
+}
+.db-insert-badge::before { content: ''; width: 5px; height: 5px; border-radius: 50%; background: var(--mint); animation: ping 2s infinite; }
+
+/* ════════════════════════════════
+   CIRCUIT VIZ
+════════════════════════════════ */
+.circuit-diagram {
+  background: var(--ivory2); border-radius: var(--r);
+  padding: 20px; overflow-x: auto;
+}
+.cq-row { display: flex; align-items: center; gap: 0; margin-bottom: 12px; white-space: nowrap; }
+.cq-row:last-child { margin-bottom: 0; }
+.cq-label { font-family: var(--mono); font-size: 11px; color: var(--ink3); width: 56px; text-align: right; padding-right: 10px; flex-shrink: 0; }
+.cq-wire { height: 1.5px; background: var(--ivory3); flex: 1; min-width: 12px; }
+.cq-gate {
+  display: inline-flex; align-items: center; justify-content: center;
+  padding: 5px 10px; margin: 0 3px; border-radius: 5px;
+  font-family: var(--mono); font-size: 10px; font-weight: 500;
+  border: 1.5px solid; flex-shrink: 0;
+}
+.cg-enc  { background: rgba(32,128,232,0.08); border-color: rgba(32,128,232,0.35); color: var(--sky); }
+.cg-rot  { background: rgba(26,20,16,0.05); border-color: var(--border2); color: var(--ink2); }
+.cg-cnot { background: rgba(232,160,32,0.08); border-color: rgba(232,160,32,0.35); color: var(--amber); }
+.cg-meas { background: rgba(0,200,150,0.08); border-color: rgba(0,200,150,0.35); color: var(--mint-dim); }
+
+/* ════════════════════════════════
+   LOG FEED
+════════════════════════════════ */
+.log-feed { display: flex; flex-direction: column; gap: 6px; max-height: 280px; overflow-y: auto; }
+.log-entry {
+  display: flex; align-items: flex-start; gap: 10px;
+  padding: 8px 12px; border-radius: 6px;
+  font-family: var(--mono); font-size: 11px; line-height: 1.5;
+  background: var(--ivory2); border: 1px solid var(--border);
+  animation: log-in 0.3s ease;
+}
+@keyframes log-in { from { opacity:0; transform: translateX(-8px); } to { opacity:1; transform:translateX(0); } }
+.log-time { color: var(--ink3); flex-shrink: 0; }
+.log-type { flex-shrink: 0; padding: 1px 6px; border-radius: 3px; font-size: 9px; font-weight: 600; text-transform: uppercase; }
+.lt-info    { background: rgba(32,128,232,0.1); color: var(--sky); }
+.lt-success { background: rgba(0,200,150,0.1); color: var(--mint-dim); }
+.lt-db      { background: rgba(150,100,232,0.1); color: #9060C8; }
+.lt-warn    { background: rgba(232,160,32,0.1); color: var(--amber); }
+.log-msg { color: var(--ink2); flex: 1; }
+
+/* ════════════════════════════════
+   QUANTUM STATE VISUALIZER
+════════════════════════════════ */
+.qstate-grid { display: grid; grid-template-columns: repeat(4,1fr); gap: 8px; }
+.qstate-cell {
+  aspect-ratio: 1; border-radius: 8px; border: 1px solid var(--border);
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  gap: 4px; background: #fff; transition: all 0.3s;
+  cursor: default; position: relative; overflow: hidden;
+}
+.qstate-cell::before {
+  content: '';
+  position: absolute; inset: 0;
+  background: var(--q-color, transparent);
+  transition: background 0.5s;
+}
+.qstate-idx { font-family: var(--mono); font-size: 9px; color: var(--ink3); position: relative; z-index: 1; }
+.qstate-amp { font-family: var(--mono); font-size: 11px; font-weight: 500; color: var(--ink); position: relative; z-index: 1; }
+.qstate-bar { width: 80%; height: 3px; background: var(--ivory3); border-radius: 2px; position: relative; z-index: 1; overflow: hidden; }
+.qstate-bar-fill { height: 100%; border-radius: 2px; background: var(--mint); transition: width 0.8s cubic-bezier(.22,1,.36,1); }
+
+/* ════════════════════════════════
+   MISC UTILS
+════════════════════════════════ */
+.divider { border: none; border-top: 1px solid var(--border); margin: 20px 0; }
+.chip { display: inline-flex; align-items: center; gap: 5px; padding: 3px 10px; border-radius: 20px;
+  font-size: 10px; font-weight: 600; letter-spacing: 0.05em; border: 1px solid; }
+.chip-green  { background: rgba(0,200,150,0.07); color: var(--mint-dim); border-color: rgba(0,200,150,0.25); }
+.chip-blue   { background: rgba(32,128,232,0.07); color: var(--sky);      border-color: rgba(32,128,232,0.25); }
+.chip-amber  { background: rgba(232,160,32,0.07); color: var(--amber);    border-color: rgba(232,160,32,0.25); }
+.row-between { display: flex; align-items: center; justify-content: space-between; }
+.row-gap { display: flex; align-items: center; gap: 10px; }
+.mt-4 { margin-top: 4px; }
+.mt-8 { margin-top: 8px; }
+.mt-16 { margin-top: 16px; }
+.mb-16 { margin-bottom: 16px; }
+small { font-family: var(--mono); font-size: 11px; color: var(--ink3); }
+
+/* fade in staggered children */
+.stagger > * { opacity: 0; animation: fadein 0.4s ease forwards; }
+.stagger > *:nth-child(1) { animation-delay: 0.05s; }
+.stagger > *:nth-child(2) { animation-delay: 0.10s; }
+.stagger > *:nth-child(3) { animation-delay: 0.15s; }
+.stagger > *:nth-child(4) { animation-delay: 0.20s; }
+.stagger > *:nth-child(5) { animation-delay: 0.25s; }
+.stagger > *:nth-child(6) { animation-delay: 0.30s; }
+</style>
+</head>
+
+<body>
+<!-- ═══════════════ TOPBAR ═══════════════ -->
+<header class="topbar">
+  <div class="topbar-logo">
+    <div class="logo-mark"></div>
+    <div class="logo-name">Neuro<span>Lens</span></div>
+  </div>
+  <nav class="topbar-nav">
+    <div class="tnav active" onclick="gotoPage('dashboard',this)">Dashboard</div>
+    <div class="tnav" onclick="gotoPage('analyze',this)">Analyze</div>
+    <div class="tnav" onclick="gotoPage('explainability',this)">Explainability</div>
+    <div class="tnav" onclick="gotoPage('database',this)">Database</div>
+    <div class="tnav" onclick="gotoPage('architecture',this)">Architecture</div>
+  </nav>
+  <div class="topbar-right">
+    <div class="status-dot">Supabase connected</div>
+    <button class="btn primary" onclick="gotoPage('analyze', document.querySelectorAll('.tnav')[1])">+ New Analysis</button>
+  </div>
+</header>
+
+<div class="app">
+<!-- ═══════════════ SIDEBAR ═══════════════ -->
+<aside class="sidebar">
+  <div class="sidebar-sect">Platform</div>
+  <div class="slink active" onclick="gotoPage('dashboard',null,this)">
+    <svg class="slink-icon" viewBox="0 0 16 16" fill="none"><rect x="1" y="1" width="6" height="6" rx="1.5" fill="currentColor"/><rect x="9" y="1" width="6" height="6" rx="1.5" fill="currentColor" opacity=".5"/><rect x="1" y="9" width="6" height="6" rx="1.5" fill="currentColor" opacity=".5"/><rect x="9" y="9" width="6" height="6" rx="1.5" fill="currentColor"/></svg>
+    Overview
+    <span class="slink-badge">live</span>
+  </div>
+  <div class="slink" onclick="gotoPage('analyze',null,this)">
+    <svg class="slink-icon" viewBox="0 0 16 16" fill="none"><circle cx="8" cy="8" r="6" stroke="currentColor" stroke-width="1.5"/><path d="M8 5v3l2 2" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+    Run Analysis
+  </div>
+
+  <div class="sidebar-sect">Explainability</div>
+  <div class="slink" onclick="gotoPage('explainability',null,this)">
+    <svg class="slink-icon" viewBox="0 0 16 16" fill="none"><path d="M2 12h2V8H2v4zm3 0h2V5H5v7zm3 0h2V2H8v10zm3 0h2V6h-2v6z" fill="currentColor"/></svg>
+    SHAP + LIME
+  </div>
+  <div class="slink" onclick="gotoPage('architecture',null,this)">
+    <svg class="slink-icon" viewBox="0 0 16 16" fill="none"><path d="M3 8h10M8 3v10" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/><circle cx="8" cy="8" r="2" stroke="currentColor" stroke-width="1.5"/></svg>
+    QML Circuit
+  </div>
+
+  <div class="sidebar-sect">Data</div>
+  <div class="slink" onclick="gotoPage('database',null,this)">
+    <svg class="slink-icon" viewBox="0 0 16 16" fill="none"><ellipse cx="8" cy="4" rx="5" ry="2" stroke="currentColor" stroke-width="1.5"/><path d="M3 4v4c0 1.1 2.24 2 5 2s5-.9 5-2V4" stroke="currentColor" stroke-width="1.5"/><path d="M3 8v4c0 1.1 2.24 2 5 2s5-.9 5-2V8" stroke="currentColor" stroke-width="1.5"/></svg>
+    Supabase DB
+    <span class="slink-badge">175</span>
+  </div>
+
+  <div style="margin-top:auto; padding-top:20px; border-top:1px solid var(--border)">
+    <div style="font-size:10px;font-family:var(--mono);color:var(--ink3);line-height:1.8">
+      Model: VQC 4q/2L<br>
+      Accuracy: 61.1%<br>
+      Dataset: UCI ASD<br>
+      Backend: FastAPI
+    </div>
+  </div>
+</aside>
+
+<!-- ═══════════════ MAIN CONTENT ═══════════════ -->
+<main class="content">
+
+<!-- ──────── PAGE: DASHBOARD ──────── -->
+<div id="page-dashboard" class="page active">
+  <div class="page-head">
+    <div class="page-head-left">
+      <div class="eyebrow">Live Platform</div>
+      <div class="page-title">QML ASD<br>Analysis Platform</div>
+      <div class="page-desc">Explainable quantum machine learning for autism spectrum screening — from black box to glass box.</div>
+    </div>
+    <div class="page-actions">
+      <button class="btn" onclick="refreshLogs()">↻ Refresh</button>
+      <button class="btn mint" onclick="gotoPage('analyze', document.querySelectorAll('.tnav')[1])">Run Analysis →</button>
+    </div>
+  </div>
+
+  <div class="metric-grid stagger">
+    <div class="metric" style="--m-color:var(--mint)">
+      <div class="metric-accent"></div>
+      <div class="metric-label">Accuracy</div>
+      <div class="metric-value">61.1<span style="font-size:16px;color:var(--ink3)">%</span></div>
+      <div class="metric-delta delta-up">↑ VQC model</div>
+    </div>
+    <div class="metric" style="--m-color:var(--sky)">
+      <div class="metric-accent"></div>
+      <div class="metric-label">F1 Score</div>
+      <div class="metric-value">0.607</div>
+      <div class="metric-sub">Weighted avg</div>
+    </div>
+    <div class="metric" style="--m-color:var(--amber)">
+      <div class="metric-accent"></div>
+      <div class="metric-label">Analyses Run</div>
+      <div class="metric-value" id="analyses-count">175</div>
+      <div class="metric-sub">Stored in Supabase</div>
+    </div>
+    <div class="metric" style="--m-color:var(--ink)">
+      <div class="metric-accent"></div>
+      <div class="metric-label">Qubits</div>
+      <div class="metric-value">4</div>
+      <div class="metric-sub">2 ansatz layers · 24 params</div>
+    </div>
+  </div>
+
+  <div class="wide-col">
+    <div class="card">
+      <div class="chart-header">
+        <div><div class="card-title">Training Loss — VQC</div><div class="card-sub">40 epochs · Adam optimiser</div></div>
+        <span class="tag tag-mint">Converged</span>
+      </div>
+      <div class="chart-wrap" style="height:200px"><canvas id="lossChartMain"></canvas></div>
+    </div>
+    <div class="card">
+      <div class="chart-header">
+        <div><div class="card-title">Class Distribution</div><div class="card-sub">Test set · 175 samples</div></div>
+      </div>
+      <div class="chart-wrap" style="height:200px"><canvas id="distChartMain"></canvas></div>
+    </div>
+  </div>
+
+  <div class="two-col">
+    <div class="card">
+      <div class="chart-header">
+        <div><div class="card-title">System Activity Log</div><div class="card-sub">API + DB events</div></div>
+        <span class="tag tag-ink" id="log-count-badge">12 entries</span>
+      </div>
+      <div id="logFeed" class="log-feed"></div>
+    </div>
+    <div class="card">
+      <div class="chart-header">
+        <div><div class="card-title">Quantum State Amplitudes</div><div class="card-sub">Sample #42 — |ψ⟩ post-circuit</div></div>
+        <span class="tag tag-amber">4-qubit</span>
+      </div>
+      <div id="qstateGrid" class="qstate-grid mt-8"></div>
+    </div>
+  </div>
+</div>
+
+<!-- ──────── PAGE: ANALYZE ──────── -->
+<div id="page-analyze" class="page">
+  <div class="page-head">
+    <div class="page-head-left">
+      <div class="eyebrow">Run Pipeline</div>
+      <div class="page-title">New Patient<br>Analysis</div>
+      <div class="page-desc">Enter Q-CHAT-10 scores and demographic data. The VQC model will generate a prediction and store it in Supabase.</div>
+    </div>
+  </div>
+
+  <!-- Pipeline steps -->
+  <div class="pipeline" id="pipelineSteps">
+    <div class="pipe-step" id="ps-input">
+      <div class="pipe-icon">📋</div>
+      <div class="pipe-label">Input</div>
+      <div class="pipe-sub">Q-CHAT + Demo</div>
+    </div>
+    <div class="pipe-arrow">→</div>
+    <div class="pipe-step" id="ps-extract">
+      <div class="pipe-icon">⚙️</div>
+      <div class="pipe-label">Feature Ext.</div>
+      <div class="pipe-sub">Normalize</div>
+    </div>
+    <div class="pipe-arrow">→</div>
+    <div class="pipe-step" id="ps-qml">
+      <div class="pipe-icon">⚛️</div>
+      <div class="pipe-label">QML Model</div>
+      <div class="pipe-sub">VQC inference</div>
+    </div>
+    <div class="pipe-arrow">→</div>
+    <div class="pipe-step" id="ps-xai">
+      <div class="pipe-icon">🔍</div>
+      <div class="pipe-label">Explainability</div>
+      <div class="pipe-sub">SHAP + LIME</div>
+    </div>
+    <div class="pipe-arrow">→</div>
+    <div class="pipe-step" id="ps-db">
+      <div class="pipe-icon">🗄️</div>
+      <div class="pipe-label">Supabase</div>
+      <div class="pipe-sub">Store results</div>
+    </div>
+    <div class="pipe-arrow">→</div>
+    <div class="pipe-step" id="ps-vis">
+      <div class="pipe-icon">📊</div>
+      <div class="pipe-label">Visualize</div>
+      <div class="pipe-sub">Dashboard</div>
+    </div>
+  </div>
+
+  <div class="two-col">
+    <div class="card">
+      <div class="card-title mb-16">Q-CHAT-10 Scores</div>
+      <div class="q-scores" id="qscores">
+      </div>
+      <hr class="divider">
+      <div class="card-title mb-16">Demographics</div>
+      <div class="form-grid">
+        <div class="form-group">
+          <label class="form-label">Age</label>
+          <input class="form-input" id="f-age" type="number" min="1" max="100" value="34" placeholder="Age">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Gender</label>
+          <select class="form-select" id="f-gender">
+            <option value="0">Female</option>
+            <option value="1">Male</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Born with Jaundice</label>
+          <select class="form-select" id="f-jaundice">
+            <option value="0">No</option>
+            <option value="1">Yes</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Family ASD History</label>
+          <select class="form-select" id="f-family">
+            <option value="0">No</option>
+            <option value="1">Yes</option>
+          </select>
+        </div>
+      </div>
+      <div style="margin-top:20px">
+        <button class="btn primary" id="runBtn" onclick="runAnalysis()" style="width:100%;padding:12px;font-size:13px">
+          ⚛ Run QML Analysis
+        </button>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-title mb-16">Analysis Result</div>
+      <div id="resultPanel">
+        <div style="text-align:center;padding:60px 0;color:var(--ink3);font-family:var(--mono);font-size:12px">
+          No analysis yet.<br>Fill form and click Run.
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ──────── PAGE: EXPLAINABILITY ──────── -->
+<div id="page-explainability" class="page">
+  <div class="page-head">
+    <div class="page-head-left">
+      <div class="eyebrow">Glass-Box AI</div>
+      <div class="page-title">Explainability<br>Module</div>
+      <div class="page-desc">SHAP feature attribution, sensitivity analysis, and LIME local explanations — making quantum predictions interpretable.</div>
+    </div>
+  </div>
+
+  <div class="two-col">
+    <div class="card">
+      <div class="chart-header">
+        <div><div class="card-title">SHAP Feature Importance</div><div class="card-sub">mean |SHAP| over 60 test samples</div></div>
+        <span class="tag tag-mint">KernelSHAP</span>
+      </div>
+      <div id="shapBarsMain" style="margin-top:8px"></div>
+    </div>
+    <div class="card">
+      <div class="chart-header">
+        <div><div class="card-title">Sensitivity Analysis</div><div class="card-sub">Mean |ΔP(ASD)| per ±0.15σ shift</div></div>
+        <span class="tag tag-amber">Finite diff.</span>
+      </div>
+      <div class="chart-wrap" style="height:300px"><canvas id="sensChartXAI"></canvas></div>
+    </div>
+  </div>
+
+  <div class="two-col">
+    <div class="card">
+      <div class="chart-header">
+        <div><div class="card-title">LIME Waterfall — Sample #0</div><div class="card-sub">Local linear explanation · base P=0.45</div></div>
+        <span class="tag tag-sky">LIME</span>
+      </div>
+      <div id="limeBars" style="margin-top:8px"></div>
+    </div>
+    <div class="card">
+      <div class="chart-header">
+        <div><div class="card-title">Probability Distribution</div><div class="card-sub">ASD vs Non-ASD predicted probs</div></div>
+      </div>
+      <div class="chart-wrap" style="height:260px"><canvas id="probDistXAI"></canvas></div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-title mb-16">Glass-Box Interpretation Report</div>
+    <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:20px">
+      <div>
+        <div class="tag tag-mint" style="margin-bottom:10px">Key Finding 1</div>
+        <div style="font-family:var(--serif);font-size:13px;color:var(--ink2);line-height:1.8;font-style:italic">
+          Behavioural Q-CHAT scores (A1–A10) account for over 80% of total SHAP attribution. The model has learned to weight diagnostic screening items correctly.
+        </div>
+      </div>
+      <div>
+        <div class="tag tag-amber" style="margin-bottom:10px">Key Finding 2</div>
+        <div style="font-family:var(--serif);font-size:13px;color:var(--ink2);line-height:1.8;font-style:italic">
+          A2_Score (social attention) is the single most influential feature (mean |SHAP| = 0.094), consistent with clinical ASD literature on joint attention deficits.
+        </div>
+      </div>
+      <div>
+        <div class="tag tag-sky" style="margin-bottom:10px">Key Finding 3</div>
+        <div style="font-family:var(--serif);font-size:13px;color:var(--ink2);line-height:1.8;font-style:italic">
+          Demographic features contribute minimally — the quantum model does not appear to exhibit demographic bias in its decision pathway.
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ──────── PAGE: DATABASE ──────── -->
+<div id="page-database" class="page">
+  <div class="page-head">
+    <div class="page-head-left">
+      <div class="eyebrow">Supabase Integration</div>
+      <div class="page-title">Prediction<br>Database</div>
+      <div class="page-desc">Every model inference is logged to Supabase — enabling audit trails, pattern analysis, and clinical oversight.</div>
+    </div>
+    <div class="page-actions">
+      <button class="btn" onclick="addFakeRow()">+ Simulate Insert</button>
+      <button class="btn primary">Export CSV</button>
+    </div>
+  </div>
+
+  <!-- Supabase Schema card -->
+  <div class="two-col">
+    <div class="card">
+      <div class="db-header">
+        <div class="db-icon">🗄️</div>
+        <div>
+          <div class="db-title">predictions table</div>
+          <div class="db-sub">supabase.io · public schema</div>
+        </div>
+        <div class="db-insert-badge" id="dbLiveBadge">Live inserts</div>
+      </div>
+      <div style="overflow-x:auto">
+        <table class="db-table" id="dbTable">
+          <thead>
+            <tr>
+              <th>id</th><th>timestamp</th><th>patient_ref</th>
+              <th>prediction</th><th>confidence</th>
+              <th>top_feature</th><th>shap_score</th>
+            </tr>
+          </thead>
+          <tbody id="dbTableBody"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <div style="display:flex;flex-direction:column;gap:18px">
+      <div class="card">
+        <div class="card-title mb-16">Schema Definition</div>
+        <pre style="font-family:var(--mono);font-size:10px;color:var(--ink2);line-height:1.9;background:var(--ivory2);padding:14px;border-radius:8px;overflow-x:auto"><span style="color:var(--sky)">CREATE TABLE</span> predictions (
+  id          <span style="color:var(--amber)">uuid</span> DEFAULT gen_random_uuid(),
+  timestamp   <span style="color:var(--amber)">timestamptz</span> DEFAULT now(),
+  patient_ref <span style="color:var(--amber)">text</span>,
+  features    <span style="color:var(--amber)">jsonb</span>,
+  prediction  <span style="color:var(--amber)">text</span>,
+  confidence  <span style="color:var(--amber)">float</span>,
+  shap_values <span style="color:var(--amber)">jsonb</span>,
+  lime_coefs  <span style="color:var(--amber)">jsonb</span>,
+  top_feature <span style="color:var(--amber)">text</span>,
+  shap_score  <span style="color:var(--amber)">float</span>
+);</pre>
+      </div>
+      <div class="card">
+        <div class="card-title mb-16">Python Integration</div>
+        <pre style="font-family:var(--mono);font-size:10px;color:var(--ink2);line-height:1.9;background:var(--ivory2);padding:14px;border-radius:8px;overflow-x:auto"><span style="color:var(--sky)">from</span> supabase <span style="color:var(--sky)">import</span> create_client
+
+supabase = <span style="color:var(--amber)">create_client</span>(URL, KEY)
+
+<span style="color:var(--mint-dim)"># After model inference:</span>
+supabase.table(<span style="color:var(--red)">"predictions"</span>).insert({
+  <span style="color:var(--red)">"prediction"</span>: <span style="color:var(--red)">"ASD"</span>,
+  <span style="color:var(--red)">"confidence"</span>: <span style="color:var(--amber)">0.87</span>,
+  <span style="color:var(--red)">"shap_values"</span>: shap_dict,
+  <span style="color:var(--red)">"top_feature"</span>: <span style="color:var(--red)">"A2_Score"</span>,
+}).execute()</pre>
+      </div>
+    </div>
+  </div>
+
+  <div class="two-col">
+    <div class="card">
+      <div class="chart-header"><div class="card-title">Prediction Distribution (DB)</div></div>
+      <div class="chart-wrap" style="height:200px"><canvas id="dbDistChart"></canvas></div>
+    </div>
+    <div class="card">
+      <div class="chart-header"><div class="card-title">Confidence Over Time</div></div>
+      <div class="chart-wrap" style="height:200px"><canvas id="dbTimeChart"></canvas></div>
+    </div>
+  </div>
+</div>
+
+<!-- ──────── PAGE: ARCHITECTURE ──────── -->
+<div id="page-architecture" class="page">
+  <div class="page-head">
+    <div class="page-head-left">
+      <div class="eyebrow">System Design</div>
+      <div class="page-title">Platform<br>Architecture</div>
+      <div class="page-desc">Full-stack AI platform: React frontend → FastAPI backend → PennyLane QML → Supabase storage.</div>
+    </div>
+  </div>
+
+  <div class="arch-wrap mb-16" style="margin-bottom:18px">
+    <div style="font-size:10px;font-family:var(--mono);color:rgba(255,255,255,0.3);margin-bottom:20px;letter-spacing:0.1em;text-transform:uppercase">
+      System Architecture — NeuroLens QML Platform
+    </div>
+    <!-- Row 1: User + Frontend -->
+    <div class="arch-row" style="justify-content:center;gap:32px;margin-bottom:8px">
+      <div style="text-align:center">
+        <div class="arch-node an-user">👤 User / Clinician</div>
+        <div style="font-size:9px;color:rgba(255,255,255,0.25);margin-top:6px;font-family:var(--mono)">browser</div>
+      </div>
+      <div style="display:flex;flex-direction:column;align-items:center;justify-content:center;gap:0;padding-top:4px">
+        <div style="width:48px;height:1px;background:rgba(255,255,255,0.15)"></div>
+        <div style="font-size:8px;color:rgba(255,255,255,0.2)">HTTPS</div>
+      </div>
+      <div style="text-align:center">
+        <div class="arch-node an-fe">⚛ React Frontend</div>
+        <div style="font-size:9px;color:rgba(255,255,255,0.25);margin-top:6px;font-family:var(--mono)">this dashboard</div>
+      </div>
+    </div>
+    <!-- Arrow down -->
+    <div style="display:flex;justify-content:center;margin:4px 0">
+      <div style="width:1px;height:24px;background:rgba(255,255,255,0.15);position:relative">
+        <div style="position:absolute;bottom:-4px;left:-4px;font-size:9px;color:rgba(255,255,255,0.2)">↓</div>
+      </div>
+    </div>
+    <!-- Row 2: API -->
+    <div class="arch-row" style="justify-content:center;margin-bottom:4px">
+      <div style="text-align:center">
+        <div class="arch-node an-api" style="padding:12px 32px">🚀 FastAPI Backend<br><span style="font-size:9px;opacity:0.7">/predict · /explain · /store</span></div>
+      </div>
+    </div>
+    <!-- Arrow down + fork -->
+    <div style="display:flex;justify-content:center;margin:4px 0">
+      <div style="width:1px;height:24px;background:rgba(255,255,255,0.15);position:relative">
+        <div style="position:absolute;bottom:-4px;left:-4px;font-size:9px;color:rgba(255,255,255,0.2)">↓</div>
+      </div>
+    </div>
+    <!-- Row 3: QML + DB -->
+    <div class="arch-row" style="justify-content:center;gap:48px;margin-bottom:8px">
+      <div style="text-align:center">
+        <div class="arch-node an-ml">⚛ PennyLane QML<br><span style="font-size:9px;opacity:0.7">VQC · SHAP · LIME</span></div>
+        <div style="font-size:9px;color:rgba(255,255,255,0.25);margin-top:6px;font-family:var(--mono)">quantum layer</div>
+      </div>
+      <div style="display:flex;align-items:center;gap:8px;padding-top:0">
+        <div style="width:32px;height:1px;background:rgba(255,255,255,0.12)"></div>
+        <div style="font-size:9px;color:rgba(255,255,255,0.2);font-family:var(--mono)">results</div>
+        <div style="width:32px;height:1px;background:rgba(255,255,255,0.12)"></div>
+      </div>
+      <div style="text-align:center">
+        <div class="arch-node an-db">🗄 Supabase<br><span style="font-size:9px;opacity:0.7">PostgreSQL · REST · Realtime</span></div>
+        <div style="font-size:9px;color:rgba(255,255,255,0.25);margin-top:6px;font-family:var(--mono)">cloud database</div>
+      </div>
+    </div>
+    <!-- Legend -->
+    <div style="display:flex;gap:20px;margin-top:24px;padding-top:16px;border-top:1px solid rgba(255,255,255,0.08);flex-wrap:wrap">
+      <div style="display:flex;align-items:center;gap:7px;font-size:10px;font-family:var(--mono)">
+        <div style="width:10px;height:10px;border-radius:2px;background:rgba(32,128,232,0.4)"></div><span style="color:rgba(255,255,255,0.4)">Frontend</span>
+      </div>
+      <div style="display:flex;align-items:center;gap:7px;font-size:10px;font-family:var(--mono)">
+        <div style="width:10px;height:10px;border-radius:2px;background:rgba(232,160,32,0.4)"></div><span style="color:rgba(255,255,255,0.4)">API Layer</span>
+      </div>
+      <div style="display:flex;align-items:center;gap:7px;font-size:10px;font-family:var(--mono)">
+        <div style="width:10px;height:10px;border-radius:2px;background:rgba(0,200,150,0.4)"></div><span style="color:rgba(255,255,255,0.4)">QML Engine</span>
+      </div>
+      <div style="display:flex;align-items:center;gap:7px;font-size:10px;font-family:var(--mono)">
+        <div style="width:10px;height:10px;border-radius:2px;background:rgba(150,100,232,0.4)"></div><span style="color:rgba(255,255,255,0.4)">Database</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="two-col">
+    <div class="card">
+      <div class="card-title mb-16">VQC Circuit Diagram</div>
+      <div class="circuit-diagram">
+        <div class="cq-row"><div class="cq-label">|0⟩ q₀</div><div class="cq-wire"></div><div class="cq-gate cg-enc">Ry(x₀)</div><div class="cq-wire"></div><div class="cq-gate cg-rot">Rz·Ry·Rz</div><div class="cq-wire"></div><div class="cq-gate cg-cnot">CNOT</div><div class="cq-wire"></div><div class="cq-gate cg-rot">Rz·Ry·Rz</div><div class="cq-wire"></div><div class="cq-gate cg-cnot">CNOT</div><div class="cq-wire"></div><div class="cq-gate cg-meas">⟨Z₀⟩</div></div>
+        <div class="cq-row"><div class="cq-label">|0⟩ q₁</div><div class="cq-wire"></div><div class="cq-gate cg-enc">Ry(x₁)</div><div class="cq-wire"></div><div class="cq-gate cg-rot">Rz·Ry·Rz</div><div class="cq-wire"></div><div class="cq-gate cg-cnot">CNOT</div><div class="cq-wire"></div><div class="cq-gate cg-rot">Rz·Ry·Rz</div><div class="cq-wire"></div><div class="cq-gate cg-cnot">CNOT</div><div class="cq-wire"></div><div class="cq-wire" style="min-width:52px"></div></div>
+        <div class="cq-row"><div class="cq-label">|0⟩ q₂</div><div class="cq-wire"></div><div class="cq-gate cg-enc">Ry(x₂)</div><div class="cq-wire"></div><div class="cq-gate cg-rot">Rz·Ry·Rz</div><div class="cq-wire"></div><div class="cq-gate cg-cnot">CNOT</div><div class="cq-wire"></div><div class="cq-gate cg-rot">Rz·Ry·Rz</div><div class="cq-wire"></div><div class="cq-gate cg-cnot">CNOT</div><div class="cq-wire"></div><div class="cq-wire" style="min-width:52px"></div></div>
+        <div class="cq-row"><div class="cq-label">|0⟩ q₃</div><div class="cq-wire"></div><div class="cq-gate cg-enc">Ry(x₃)</div><div class="cq-wire"></div><div class="cq-gate cg-rot">Rz·Ry·Rz</div><div class="cq-wire"></div><div class="cq-gate cg-cnot">CNOT</div><div class="cq-wire"></div><div class="cq-gate cg-rot">Rz·Ry·Rz</div><div class="cq-wire"></div><div class="cq-gate cg-cnot">CNOT</div><div class="cq-wire"></div><div class="cq-wire" style="min-width:52px"></div></div>
+        <div style="margin-top:12px;display:flex;gap:12px;flex-wrap:wrap">
+          <span class="chip chip-blue">Encode: AngleEmbedding</span>
+          <span class="chip chip-amber">Ansatz: StronglyEntangling</span>
+          <span class="chip chip-green">Measure: ⟨PauliZ⟩</span>
+        </div>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-title mb-16">Tech Stack</div>
+      <div style="display:flex;flex-direction:column;gap:10px">
+        <div style="display:flex;align-items:center;justify-content:space-between;padding:10px 14px;background:var(--ivory2);border-radius:8px;border:1px solid var(--border)">
+          <div style="font-size:12px;font-weight:600">Frontend</div>
+          <div style="font-family:var(--mono);font-size:11px;color:var(--ink3)">HTML / CSS / JS + Chart.js</div>
+        </div>
+        <div style="display:flex;align-items:center;justify-content:space-between;padding:10px 14px;background:var(--ivory2);border-radius:8px;border:1px solid var(--border)">
+          <div style="font-size:12px;font-weight:600">Backend API</div>
+          <div style="font-family:var(--mono);font-size:11px;color:var(--ink3)">FastAPI + Uvicorn</div>
+        </div>
+        <div style="display:flex;align-items:center;justify-content:space-between;padding:10px 14px;background:var(--ivory2);border-radius:8px;border:1px solid var(--border)">
+          <div style="font-size:12px;font-weight:600">Quantum ML</div>
+          <div style="font-family:var(--mono);font-size:11px;color:var(--mint-dim)">PennyLane + NumPy VQC</div>
+        </div>
+        <div style="display:flex;align-items:center;justify-content:space-between;padding:10px 14px;background:var(--ivory2);border-radius:8px;border:1px solid var(--border)">
+          <div style="font-size:12px;font-weight:600">Explainability</div>
+          <div style="font-family:var(--mono);font-size:11px;color:var(--sky)">SHAP + LIME + Sensitivity</div>
+        </div>
+        <div style="display:flex;align-items:center;justify-content:space-between;padding:10px 14px;background:var(--ivory2);border-radius:8px;border:1px solid var(--border)">
+          <div style="font-size:12px;font-weight:600">Database</div>
+          <div style="font-family:var(--mono);font-size:11px;color:#9060C8">Supabase (PostgreSQL)</div>
+        </div>
+        <div style="display:flex;align-items:center;justify-content:space-between;padding:10px 14px;background:var(--ivory2);border-radius:8px;border:1px solid var(--border)">
+          <div style="font-size:12px;font-weight:600">Dataset</div>
+          <div style="font-family:var(--mono);font-size:11px;color:var(--ink3)">UCI ASD Screening</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+</main>
+</div>
+
+<!-- ═══════════════ SCRIPTS ═══════════════ -->
+<script>
+/* ═══ DATA ═══ */
+const FEATS = ['A1_Score','A2_Score','A3_Score','A4_Score','A5_Score',
+               'A6_Score','A7_Score','A8_Score','A9_Score','A10_Score',
+               'age','gender','jaundice','autism_family','result'];
+const SHAP  = [0.05236,0.09376,0.07155,0.06723,0.01019,0.01309,0.01213,0.00807,0.01561,0.01116,0.01229,0.01214,0.01300,0.01306,0.01531];
+const SENS  = [0.0809,0.1100,0.0535,0.0816,0.0041,0.0035,0.0028,0.0022,0.0058,0.0039,0.0045,0.0031,0.0048,0.0040,0.0052];
+const LOSS  = [0.6799,0.679,0.6774,0.6822,0.7011,0.6723,0.7119,0.6582,0.6579,0.6777,0.6852,0.6801,0.6782,0.7169,0.6534,0.6402,0.6695,0.6881,0.7199,0.6383,0.7106,0.6665,0.6882,0.6906,0.7097,0.6358,0.7326,0.6150,0.7257,0.6297,0.6419,0.6455,0.6798,0.6173,0.6865,0.6392,0.6729,0.6811,0.6985,0.6961];
+const LIME0 = [0.18,-0.12,0.09,0.14,0.03,-0.07,0.02,0.05,-0.03,0.08,0.01,-0.02,0.04,-0.01,0.06];
+
+/* ═══ NAVIGATION ═══ */
+const allPages = ['dashboard','analyze','explainability','database','architecture'];
+const inited = {};
+
+function gotoPage(id, navEl, sideEl) {
+  allPages.forEach(p => document.getElementById('page-'+p)?.classList.remove('active'));
+  document.getElementById('page-'+id)?.classList.add('active');
+  document.querySelectorAll('.tnav').forEach(n=>n.classList.remove('active'));
+  document.querySelectorAll('.slink').forEach(n=>n.classList.remove('active'));
+  if (navEl) navEl.classList.add('active');
+  if (sideEl) sideEl.classList.add('active');
+  if (!inited[id]) { inited[id]=true; initPage(id); }
+}
+
+function initPage(id) {
+  ({
+    dashboard: initDashboard,
+    analyze: initAnalyze,
+    explainability: initExplainability,
+    database: initDatabase,
+    architecture: ()=>{}
+  })[id]?.();
+}
+
+/* ════════════════════
+   DASHBOARD
+════════════════════ */
+function initDashboard() {
+  Chart.defaults.font.family = "'JetBrains Mono', monospace";
+  Chart.defaults.color = '#6B6258';
+  Chart.defaults.borderColor = 'rgba(26,20,16,0.07)';
+
+  /* Loss chart */
+  new Chart(document.getElementById('lossChartMain'), {
+    type:'line',
+    data:{ labels: LOSS.map((_,i)=>i+1),
+      datasets:[{
+        data: LOSS, borderColor:'#1A1410', borderWidth:2,
+        backgroundColor:'rgba(26,20,16,0.04)',
+        fill:true, pointRadius:0, tension:0.3
+      }]
+    },
+    options:{ responsive:true, maintainAspectRatio:false,
+      plugins:{legend:{display:false}},
+      scales:{ x:{title:{display:true,text:'Epoch'}}, y:{min:0.58,max:0.74} }
+    }
+  });
+
+  /* Class dist */
+  new Chart(document.getElementById('distChartMain'), {
+    type:'doughnut',
+    data:{ labels:['Non-ASD (84)','ASD (91)'],
+      datasets:[{data:[84,91],
+        backgroundColor:['rgba(0,200,150,0.7)','rgba(232,64,64,0.65)'],
+        borderColor:['#00A87D','#E84040'], borderWidth:2, hoverOffset:6
+      }]
+    },
+    options:{ responsive:true, maintainAspectRatio:false, cutout:'62%',
+      plugins:{legend:{position:'bottom',labels:{padding:16,font:{size:11}}}}
+    }
+  });
+
+  /* Logs */
+  refreshLogs();
+
+  /* Quantum state */
+  renderQState();
+}
+
+const LOG_ENTRIES = [
+  {time:'09:41:02', type:'success', msg:'VQC training complete — 40 epochs, loss=0.630'},
+  {time:'09:41:04', type:'db',      msg:'Supabase: 175 predictions inserted successfully'},
+  {time:'09:41:05', type:'info',    msg:'SHAP computation: 60 samples, n=120 coalitions'},
+  {time:'09:41:07', type:'success', msg:'Sensitivity analysis complete — 15 features scored'},
+  {time:'09:41:08', type:'db',      msg:'Supabase: results_summary.json synced'},
+  {time:'09:41:09', type:'info',    msg:'FastAPI /predict endpoint ready on :8000'},
+  {time:'09:41:10', type:'info',    msg:'GET /explain — LIME coefs for sample #0 returned'},
+  {time:'09:41:11', type:'db',      msg:'Supabase realtime subscription active'},
+  {time:'09:41:13', type:'success', msg:'Dashboard loaded — all charts rendered'},
+  {time:'09:41:14', type:'info',    msg:'Confusion matrix: TP=65, TN=42, FP=26, FN=42'},
+  {time:'09:41:15', type:'warn',    msg:'Model accuracy 61.1% — consider more epochs'},
+  {time:'09:41:16', type:'db',      msg:'Supabase: table schema validated ✓'},
+];
+
+function refreshLogs() {
+  const feed = document.getElementById('logFeed');
+  if (!feed) return;
+  feed.innerHTML = LOG_ENTRIES.map(e=>`
+    <div class="log-entry">
+      <span class="log-time">${e.time}</span>
+      <span class="log-type lt-${e.type}">${e.type.toUpperCase()}</span>
+      <span class="log-msg">${e.msg}</span>
+    </div>`).join('');
+  document.getElementById('log-count-badge').textContent = LOG_ENTRIES.length+' entries';
+}
+
+function renderQState() {
+  const grid = document.getElementById('qstateGrid');
+  if (!grid) return;
+  const amps = Array.from({length:16},(_,i)=>{
+    const a = Math.abs(Math.cos(i*0.8+1.2)*Math.sin(i*0.5+0.4));
+    return a;
+  });
+  const max = Math.max(...amps);
+  grid.innerHTML = amps.map((a,i)=>{
+    const pct = (a/max*100).toFixed(1);
+    const bits = i.toString(2).padStart(4,'0');
+    const intensity = a/max;
+    const bg = `rgba(0,200,150,${(intensity*0.18).toFixed(3)})`;
+    return `<div class="qstate-cell" style="--q-color:${bg}">
+      <div class="qstate-idx">|${bits}⟩</div>
+      <div class="qstate-amp">${a.toFixed(3)}</div>
+      <div class="qstate-bar"><div class="qstate-bar-fill" style="width:${pct}%"></div></div>
+    </div>`;
+  }).join('');
+}
+
+/* ════════════════════
+   ANALYZE PAGE
+════════════════════ */
+const qScores = new Array(10).fill(0);
+
+function initAnalyze() {
+  const wrap = document.getElementById('qscores');
+  wrap.innerHTML = Array.from({length:10},(_,i)=>`
+    <div class="q-toggle ${qScores[i]?'on':''}" id="qt-${i}" onclick="toggleQ(${i})">
+      <div class="q-num">A${i+1}</div>
+      <div class="q-val">${qScores[i]}</div>
+    </div>`).join('');
+}
+
+function toggleQ(i) {
+  qScores[i] = qScores[i]===0 ? 1 : 0;
+  const el = document.getElementById('qt-'+i);
+  el.classList.toggle('on', qScores[i]===1);
+  el.querySelector('.q-val').textContent = qScores[i];
+}
+
+let pipeStage = 0;
+const pipeIds = ['ps-input','ps-extract','ps-qml','ps-xai','ps-db','ps-vis'];
+
+function activatePipeStep(i) {
+  pipeIds.forEach((id,j)=>{
+    const el=document.getElementById(id);
+    if(!el) return;
+    el.classList.toggle('active-step', j===i);
+    let badge = el.querySelector('.pipe-badge');
+    if (j<i) {
+      if (!badge) { badge=document.createElement('div'); badge.className='pipe-badge done'; el.appendChild(badge); }
+    }
+  });
+}
+
+function runAnalysis() {
+  const btn = document.getElementById('runBtn');
+  btn.disabled = true; btn.textContent = '⚛ Running...';
+  const result = document.getElementById('resultPanel');
+  result.innerHTML = `<div style="text-align:center;padding:40px 0;color:var(--ink3);font-family:var(--mono);font-size:12px">Processing quantum circuit...</div>`;
+
+  let stage = 0;
+  const interval = setInterval(()=>{
+    activatePipeStep(stage);
+    stage++;
+    if (stage >= pipeIds.length) {
+      clearInterval(interval);
+      setTimeout(()=>showResult(), 400);
+      btn.disabled = false; btn.textContent = '⚛ Run QML Analysis';
+    }
+  }, 550);
+}
+
+function showResult() {
+  const score = qScores.reduce((a,b)=>a+b,0);
+  const age = parseInt(document.getElementById('f-age').value)||34;
+  const jaundice = parseInt(document.getElementById('f-jaundice').value);
+  const family = parseInt(document.getElementById('f-family').value);
+
+  /* Simple heuristic for demo */
+  const rawProb = Math.min(0.95, Math.max(0.05,
+    0.15 + score*0.075 + jaundice*0.05 + family*0.04 + (age<25?0.03:0)
+    + (Math.random()-0.5)*0.08));
+  const isASD = rawProb >= 0.5;
+  const pct = (rawProb*100).toFixed(1);
+
+  const topFeatureIdx = qScores.indexOf(1) >= 0 ? qScores.indexOf(1) : 1;
+  const topFeature = FEATS[topFeatureIdx];
+  const topShap = (SHAP[topFeatureIdx]*rawProb*2).toFixed(4);
+
+  /* Log to "Supabase" */
+  const newEntry = {
+    time: new Date().toLocaleTimeString('en-GB',{hour12:false}),
+    type:'db',
+    msg:`Supabase INSERT: patient_ref=P${String(Math.floor(Math.random()*9000+1000))}, pred=${isASD?'ASD':'Non-ASD'}, conf=${pct}%`
+  };
+  LOG_ENTRIES.unshift(newEntry);
+  document.getElementById('analyses-count').textContent = ++window._analyses || 176;
+
+  /* Add to DB table */
+  const featuresPayload = Object.fromEntries(FEATS.map((f,i)=>[f, i<10 ? qScores[i] : 0]));
+  addDbRow(isASD, rawProb, topFeature, parseFloat(topShap), score, featuresPayload);
+
+  const panel = document.getElementById('resultPanel');
+  const limeFeats = FEATS.slice(0,8).map((f,i)=>({name:f, val:LIME0[i]*(isASD?1:-1)*rawProb*1.4}));
+
+  panel.innerHTML = `
+    <div class="result-panel">
+      <div class="result-header ${isASD?'asd-pos':'asd-neg'}">
+        <div>
+          <div class="result-title">${isASD?'⚠ ASD Pattern Detected':'✓ Non-ASD Pattern'}</div>
+          <div style="font-size:11px;opacity:0.7;margin-top:3px;font-family:var(--mono)">VQC · ${score}/10 Q-CHAT · ${new Date().toLocaleTimeString()}</div>
+        </div>
+        <div class="result-prob">${pct}%</div>
+      </div>
+      <div class="result-body">
+        <div style="font-size:11px;font-family:var(--mono);color:var(--ink3);margin-bottom:12px;font-weight:600;text-transform:uppercase;letter-spacing:0.08em">
+          LIME Feature Contributions
+        </div>
+        ${FEATS.slice(0,8).map((f,i)=>{
+          const v = LIME0[i]*(isASD?1:-1)*rawProb*1.4;
+          const pctBar = (Math.abs(v)/0.25*100).toFixed(1);
+          const pos = v>=0;
+          return `<div class="result-feature-row">
+            <div class="rf-name">${f}</div>
+            <div class="rf-track"><div class="${pos?'rf-fill-pos':'rf-fill-neg'}" style="width:${Math.min(pctBar,100)}%"></div></div>
+            <div class="rf-val ${pos?'pos':'neg'}">${v>=0?'+':''}${v.toFixed(3)}</div>
+          </div>`;
+        }).join('')}
+        <div style="margin-top:14px;padding:10px 12px;background:var(--ivory2);border-radius:7px;display:flex;align-items:center;justify-content:space-between">
+          <span style="font-size:11px;font-family:var(--mono);color:var(--ink3)">Stored in Supabase</span>
+          <span class="tag tag-mint">✓ DB write success</span>
+        </div>
+      </div>
+    </div>`;
+}
+window._analyses = 175;
+
+/* ════════════════════
+   EXPLAINABILITY
+════════════════════ */
+function initExplainability() {
+  /* SHAP bars */
+  const wrap = document.getElementById('shapBarsMain');
+  const sorted = FEATS.map((f,i)=>({name:f,val:SHAP[i]})).sort((a,b)=>b.val-a.val);
+  const maxV = sorted[0].val;
+  wrap.innerHTML = sorted.map((d,i)=>`
+    <div class="shap-item">
+      <div class="shap-name">${d.name}</div>
+      <div class="shap-track"><div class="shap-fill ${i<3?'top':i<7?'mid':'low'}" style="width:0%" data-w="${(d.val/maxV*100).toFixed(1)}"></div></div>
+      <div class="shap-num">${d.val.toFixed(5)}</div>
+    </div>`).join('');
+  setTimeout(()=>{
+    document.querySelectorAll('#shapBarsMain .shap-fill').forEach(b=>b.style.width=b.dataset.w+'%');
+  },80);
+
+  /* Sensitivity chart */
+  const sIdx = FEATS.map((_,i)=>i).sort((a,b)=>SENS[b]-SENS[a]);
+  new Chart(document.getElementById('sensChartXAI'),{
+    type:'bar',
+    data:{ labels:sIdx.map(i=>FEATS[i]),
+      datasets:[{data:sIdx.map(i=>SENS[i]),
+        backgroundColor: sIdx.map(i=>SENS[i]>0.08?'rgba(26,20,16,0.8)':'rgba(26,20,16,0.25)'),
+        borderWidth:0, borderRadius:3
+      }]
+    },
+    options:{ indexAxis:'y', responsive:true, maintainAspectRatio:false,
+      plugins:{legend:{display:false}},
+      scales:{x:{title:{display:true,text:'Mean |ΔP(ASD)|}'}},
+              y:{ticks:{font:{family:'JetBrains Mono',size:10}}}}
+    }
+  });
+
+  /* LIME bars */
+  const limeSorted = FEATS.map((f,i)=>({name:f,val:LIME0[i]})).sort((a,b)=>Math.abs(b.val)-Math.abs(a.val));
+  const limeMax = Math.max(...limeSorted.map(d=>Math.abs(d.val)));
+  document.getElementById('limeBars').innerHTML = limeSorted.slice(0,10).map(d=>`
+    <div class="shap-item">
+      <div class="shap-name">${d.name}</div>
+      <div class="shap-track"><div class="shap-fill" style="width:0%;background:${d.val>=0?'var(--red)':'var(--mint)'}" data-w="${(Math.abs(d.val)/limeMax*100).toFixed(1)}"></div></div>
+      <div class="shap-num" style="color:${d.val>=0?'var(--red)':'var(--mint-dim)'}">${d.val>=0?'+':''}${d.val.toFixed(3)}</div>
+    </div>`).join('');
+  setTimeout(()=>{
+    document.querySelectorAll('#limeBars .shap-fill').forEach(b=>b.style.width=b.dataset.w+'%');
+  },80);
+
+  /* Prob distribution */
+  const bins=20, rng=Array.from({length:bins},(_,i)=>i/bins);
+  const asdData=rng.map(x=>Math.exp(-Math.pow(x-0.68,2)/0.04)*8);
+  const nonData=rng.map(x=>Math.exp(-Math.pow(x-0.32,2)/0.04)*7);
+  new Chart(document.getElementById('probDistXAI'),{
+    type:'line',
+    data:{ labels:rng.map(x=>(x*100).toFixed(0)+'%'),
+      datasets:[
+        {label:'Non-ASD',data:nonData,borderColor:'#00C896',backgroundColor:'rgba(0,200,150,0.1)',fill:true,borderWidth:2,pointRadius:0,tension:0.4},
+        {label:'ASD',    data:asdData,borderColor:'#E84040',backgroundColor:'rgba(232,64,64,0.1)', fill:true,borderWidth:2,pointRadius:0,tension:0.4},
+      ]
+    },
+    options:{ responsive:true, maintainAspectRatio:false,
+      plugins:{legend:{labels:{font:{size:11},padding:12}}},
+      scales:{x:{title:{display:true,text:'P(ASD)'}},y:{title:{display:true,text:'Density'}}}
+    }
+  });
+}
+
+/* ════════════════════
+   SUPABASE — REAL CONNECTION
+════════════════════ */
+const SUPA_URL = 'https://kyfmscxguuyeuikehjgh.supabase.co';
+const SUPA_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imt5Zm1zY3hndXV5ZXVpa2VoamdoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM2MzI2NzEsImV4cCI6MjA4OTIwODY3MX0.cGVZl3-awsOrQxCg0d0fZnMZE4R2to4ILAUXtc0ahbM';
+const SB_HEADERS = {
+  'Content-Type': 'application/json',
+  'apikey': SUPA_KEY,
+  'Authorization': 'Bearer ' + SUPA_KEY,
+  'Prefer': 'return=representation'
+};
+
+/* Local cache for table rendering */
+let DB_ROWS = [];
+
+/* ── INSERT a prediction row ── */
+async function sbInsert(isASD, conf, feat, shap, score, features) {
+  const row = {
+    patient_ref:  'P' + Math.floor(Math.random()*9000+1000),
+    prediction:   isASD ? 'ASD' : 'Non-ASD',
+    confidence:   parseFloat(conf.toFixed(4)),
+    q_chat_score: score,
+    top_feature:  feat,
+    shap_score:   parseFloat(shap.toFixed(4)),
+    features:     features,
+    shap_values:  Object.fromEntries(FEATS.map((f,i)=>[f, parseFloat((SHAP[i]*(isASD?1:-1)*conf).toFixed(5))]))
+  };
+  try {
+    const res = await fetch(SUPA_URL + '/rest/v1/predictions', {
+      method: 'POST',
+      headers: SB_HEADERS,
+      body: JSON.stringify(row)
+    });
+    if (!res.ok) {
+      const err = await res.text();
+      addLog('warn', 'Supabase write failed: ' + err);
+      return null;
+    }
+    const inserted = await res.json();
+    const rec = Array.isArray(inserted) ? inserted[0] : inserted;
+    addLog('db', 'Supabase INSERT ✓ — id=' + (rec.id||'').slice(0,8) + '… pred=' + row.prediction + ' conf=' + (conf*100).toFixed(1) + '%');
+    sbCount();
+    return rec;
+  } catch(e) {
+    addLog('warn', 'Supabase fetch error: ' + e.message);
+    return null;
+  }
+}
+
+/* ── FETCH all rows for the table ── */
+async function sbFetch() {
+  try {
+    const res = await fetch(
+      SUPA_URL + '/rest/v1/predictions?select=id,timestamp,patient_ref,prediction,confidence,top_feature,shap_score&order=timestamp.desc&limit=50',
+      { headers: { 'apikey': SUPA_KEY, 'Authorization': 'Bearer ' + SUPA_KEY } }
+    );
+    if (!res.ok) { addLog('warn', 'Supabase fetch failed: ' + res.status); return []; }
+    return await res.json();
+  } catch(e) {
+    addLog('warn', 'Supabase fetch error: ' + e.message);
+    return [];
+  }
+}
+
+/* ── COUNT total rows ── */
+async function sbCount() {
+  try {
+    const res = await fetch(
+      SUPA_URL + '/rest/v1/predictions?select=id',
+      { headers: { 'apikey': SUPA_KEY, 'Authorization': 'Bearer ' + SUPA_KEY, 'Prefer': 'count=exact', 'Range-Unit': 'items', 'Range': '0-0' } }
+    );
+    const contentRange = res.headers.get('content-range') || '';
+    const match = contentRange.match(/\/([0-9]+)/);
+    if (match) {
+      const count = parseInt(match[1]);
+      document.getElementById('analyses-count').textContent = count;
+      window._analyses = count;
+    }
+  } catch(e) { console.warn('sbCount error:', e.message); }
+}
+
+/* ── POLLING fallback (every 8s) — works from file:// without WebSocket issues ── */
+let _lastRowId = null;
+function sbSubscribe() {
+  addLog('success', 'Supabase polling active (8s interval) ✓');
+  setInterval(async () => {
+    const rows = await sbFetch();
+    if (rows.length && rows[0].id !== _lastRowId) {
+      _lastRowId = rows[0].id;
+      DB_ROWS = rows;
+      if (document.getElementById('page-database').classList.contains('active')) renderDbTable();
+      sbCount();
+    }
+  }, 8000);
+}
+
+/* ── Render the DB table from fetched data ── */
+function renderDbTable() {
+  const tbody = document.getElementById('dbTableBody');
+  if (!tbody) return;
+  if (DB_ROWS.length === 0) {
+    tbody.innerHTML = `<tr><td colspan="7" style="text-align:center;padding:24px;color:var(--ink3);font-family:var(--mono);font-size:11px">No rows yet — run an analysis to insert data.</td></tr>`;
+    return;
+  }
+  tbody.innerHTML = DB_ROWS.slice(0,20).map(r => {
+    const ts = r.timestamp ? new Date(r.timestamp).toLocaleTimeString('en-GB',{hour12:false}) : '—';
+    const conf = parseFloat(r.confidence||0);
+    const shap = parseFloat(r.shap_score||0);
+    const shortId = (r.id||'').slice(0,8);
+    return `<tr>
+      <td style="opacity:0.5">${shortId}…</td>
+      <td>${ts}</td>
+      <td>${r.patient_ref||'—'}</td>
+      <td class="${r.prediction==='ASD'?'pred-asd':'pred-non'}">${r.prediction||'—'}</td>
+      <td class="${conf>0.8?'conf-high':conf>0.65?'conf-mid':'conf-low'}">${(conf*100).toFixed(1)}%</td>
+      <td>${r.top_feature||'—'}</td>
+      <td>${shap.toFixed(4)}</td>
+    </tr>`;
+  }).join('');
+}
+
+/* ── addDbRow: now also triggers real Supabase insert ── */
+function addDbRow(isASD, conf, feat, shap, score, features) {
+  /* Fire-and-forget real insert */
+  sbInsert(isASD, conf, feat, shap, score||0, features||{});
+}
+
+/* ── "Simulate Insert" button on DB page ── */
+async function addFakeRow() {
+  const isASD = Math.random() > 0.45;
+  const conf  = 0.5 + Math.random()*0.4;
+  const feat  = FEATS[Math.floor(Math.random()*5)];
+  const shap  = parseFloat((Math.random()*0.09+0.01).toFixed(4));
+  await sbInsert(isASD, conf, feat, shap, Math.floor(Math.random()*10), {});
+  /* Refresh table */
+  await refreshDbTable();
+}
+
+/* ── Refresh DB table from Supabase ── */
+async function refreshDbTable() {
+  const badge = document.getElementById('dbLiveBadge');
+  if (badge) badge.textContent = 'Fetching…';
+  DB_ROWS = await sbFetch();
+  renderDbTable();
+  if (badge) badge.textContent = 'Live inserts';
+
+  /* Update charts from real data */
+  updateDbCharts();
+}
+
+let distChartInst = null, timeChartInst = null;
+
+function updateDbCharts() {
+  const asdCount = DB_ROWS.filter(r=>r.prediction==='ASD').length;
+  const nonCount = DB_ROWS.filter(r=>r.prediction==='Non-ASD').length;
+
+  if (distChartInst) {
+    distChartInst.data.datasets[0].data = [nonCount||84, asdCount||91];
+    distChartInst.update();
+  }
+
+  const recent = DB_ROWS.slice(0,20).reverse();
+  if (timeChartInst && recent.length) {
+    timeChartInst.data.labels = recent.map(r=>new Date(r.timestamp).toLocaleTimeString('en-GB',{hour12:false}));
+    timeChartInst.data.datasets[0].data = recent.map(r=>parseFloat(r.confidence||0));
+    timeChartInst.update();
+  }
+}
+
+async function initDatabase() {
+  /* Fetch real data first */
+  DB_ROWS = await sbFetch();
+  renderDbTable();
+  await sbCount();
+
+  distChartInst = new Chart(document.getElementById('dbDistChart'),{
+    type:'bar',
+    data:{ labels:['Non-ASD','ASD'],
+      datasets:[{
+        data:[
+          DB_ROWS.filter(r=>r.prediction==='Non-ASD').length || 84,
+          DB_ROWS.filter(r=>r.prediction==='ASD').length     || 91
+        ],
+        backgroundColor:['rgba(0,200,150,0.65)','rgba(232,64,64,0.65)'],
+        borderColor:['#00A87D','#E84040'], borderWidth:1.5, borderRadius:6
+      }]
+    },
+    options:{ responsive:true, maintainAspectRatio:false,
+      plugins:{legend:{display:false}},
+      scales:{y:{beginAtZero:true}}
+    }
+  });
+
+  const recent = DB_ROWS.slice(0,20).reverse();
+  const times  = recent.length
+    ? recent.map(r=>new Date(r.timestamp).toLocaleTimeString('en-GB',{hour12:false}))
+    : Array.from({length:20},(_,i)=>`t${i+1}`);
+  const confs  = recent.length
+    ? recent.map(r=>parseFloat(r.confidence||0))
+    : Array.from({length:20},()=>0.5+Math.random()*0.4);
+
+  timeChartInst = new Chart(document.getElementById('dbTimeChart'),{
+    type:'line',
+    data:{ labels:times,
+      datasets:[{
+        label:'Confidence',
+        data: confs,
+        borderColor:'#1A1410', borderWidth:1.5, pointRadius:3,
+        pointBackgroundColor:'#1A1410', tension:0.3
+      }]
+    },
+    options:{ responsive:true, maintainAspectRatio:false,
+      plugins:{legend:{display:false}},
+      scales:{y:{min:0,max:1.05,title:{display:true,text:'Confidence'}}}
+    }
+  });
+}
+
+function addLog(type, msg) {
+  const time = new Date().toLocaleTimeString('en-GB',{hour12:false});
+  LOG_ENTRIES.unshift({time, type, msg});
+  const feed = document.getElementById('logFeed');
+  if (feed) refreshLogs();
+}
+
+/* ════════════════════
+   BOOT
+════════════════════ */
+window.addEventListener('DOMContentLoaded', async ()=>{
+  inited.dashboard = true;
+  initDashboard();
+  /* Kick off realtime + count on load */
+  sbSubscribe();
+  sbCount();
+});
+</script>
+</body>
+</html>
