@@ -1010,21 +1010,27 @@ let API_ONLINE = false;
 
 /* Check if API is reachable */
 async function checkApi() {
+  const statusEl = document.getElementById('api-status');
   try {
-    const r = await fetch(API_URL + '/health', { signal: AbortSignal.timeout(3000) });
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(), 4000);
+    const r = await fetch(API_URL + '/health', { signal: controller.signal });
+    clearTimeout(timer);
     if (r.ok) {
+      const data = await r.json();
       API_ONLINE = true;
-      document.getElementById('api-status').textContent = 'API online';
-      document.getElementById('api-status').style.color = 'var(--mint-dim)';
-      addLog('success', 'FastAPI backend connected at ' + API_URL);
-      /* Load live stats */
+      statusEl.textContent = 'FastAPI online ⚛';
+      statusEl.style.color = 'var(--mint-dim)';
+      addLog('success', 'FastAPI connected — VQC ' + data.qubits + 'q/' + data.layers + 'L ready');
       loadStats();
+    } else {
+      throw new Error('HTTP ' + r.status);
     }
   } catch(e) {
     API_ONLINE = false;
-    document.getElementById('api-status').textContent = 'API offline (demo mode)';
-    document.getElementById('api-status').style.color = 'var(--amber)';
-    addLog('warn', 'FastAPI not reachable — running in browser demo mode');
+    statusEl.textContent = 'API offline (demo mode)';
+    statusEl.style.color = 'var(--amber)';
+    addLog('warn', 'FastAPI not reachable — demo mode active');
   }
 }
 
