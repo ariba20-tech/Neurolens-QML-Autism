@@ -495,6 +495,7 @@ small { font-family: var(--mono); font-size: 11px; color: var(--ink3); }
   </nav>
   <div class="topbar-right">
     <div class="status-dot">Supabase connected</div>
+    <div id="api-status" style="font-size:11px;font-family:var(--mono);color:var(--amber)">Checking API...</div>
     <button class="btn primary" onclick="gotoPage('analyze', document.querySelectorAll('.tnav')[1])">+ New Analysis</button>
   </div>
 </header>
@@ -1003,6 +1004,40 @@ supabase.table(<span style="color:var(--red)">"predictions"</span>).insert({
 
 <!-- ═══════════════ SCRIPTS ═══════════════ -->
 <script>
+/* ═══ CONFIG ═══ */
+const API_URL = 'http://localhost:8000';  /* Change to your deployed API URL */
+let API_ONLINE = false;
+
+/* Check if API is reachable */
+async function checkApi() {
+  try {
+    const r = await fetch(API_URL + '/health', { signal: AbortSignal.timeout(3000) });
+    if (r.ok) {
+      API_ONLINE = true;
+      document.getElementById('api-status').textContent = 'API online';
+      document.getElementById('api-status').style.color = 'var(--mint-dim)';
+      addLog('success', 'FastAPI backend connected at ' + API_URL);
+      /* Load live stats */
+      loadStats();
+    }
+  } catch(e) {
+    API_ONLINE = false;
+    document.getElementById('api-status').textContent = 'API offline (demo mode)';
+    document.getElementById('api-status').style.color = 'var(--amber)';
+    addLog('warn', 'FastAPI not reachable — running in browser demo mode');
+  }
+}
+
+async function loadStats() {
+  try {
+    const r = await fetch(API_URL + '/stats');
+    if (!r.ok) return;
+    const s = await r.json();
+    document.getElementById('analyses-count').textContent = s.total_analyses;
+    window._analyses = s.total_analyses;
+  } catch(e) {}
+}
+
 /* ═══ DATA ═══ */
 const FEATS = ['A1_Score','A2_Score','A3_Score','A4_Score','A5_Score',
                'A6_Score','A7_Score','A8_Score','A9_Score','A10_Score',
@@ -1177,51 +1212,80 @@ function runAnalysis() {
     stage++;
     if (stage >= pipeIds.length) {
       clearInterval(interval);
-      setTimeout(()=>showResult(), 400);
+      setTimeout(()=>showResult(), 400); /* showResult is async */
       btn.disabled = false; btn.textContent = '⚛ Run QML Analysis';
     }
   }, 550);
 }
 
-function showResult() {
-  const score = qScores.reduce((a,b)=>a+b,0);
-  const age = parseInt(document.getElementById('f-age').value)||34;
+async function showResult() {
+  const score  = qScores.reduce((a,b)=>a+b,0);
+  const age    = parseInt(document.getElementById('f-age').value)||34;
+  const gender = parseInt(document.getElementById('f-gender').value);
   const jaundice = parseInt(document.getElementById('f-jaundice').value);
-  const family = parseInt(document.getElementById('f-family').value);
+  const family   = parseInt(document.getElementById('f-family').value);
+  const panel  = document.getElementById('resultPanel');
 
-  /* Simple heuristic for demo */
-  const rawProb = Math.min(0.95, Math.max(0.05,
-    0.15 + score*0.075 + jaundice*0.05 + family*0.04 + (age<25?0.03:0)
-    + (Math.random()-0.5)*0.08));
-  const isASD = rawProb >= 0.5;
-  const pct = (rawProb*100).toFixed(1);
+  let rawProb, pred, topFeature, topShap, limeDict, fromAPI = false;
 
-  const topFeatureIdx = qScores.indexOf(1) >= 0 ? qScores.indexOf(1) : 1;
-  const topFeature = FEATS[topFeatureIdx];
-  const topShap = (SHAP[topFeatureIdx]*rawProb*2).toFixed(4);
+  /* ── Try real FastAPI first ── */
+  if (API_ONLINE) {
+    try {
+      panel.innerHTML = `<div style="text-align:center;padding:40px 0;color:var(--ink3);font-family:var(--mono);font-size:12px">⚛ Calling FastAPI /predict...</div>`;
+      addLog('info', 'POST ' + API_URL + '/predict — q_chat_score=' + score);
 
-  /* Log to "Supabase" */
-  const newEntry = {
-    time: new Date().toLocaleTimeString('en-GB',{hour12:false}),
-    type:'db',
-    msg:`Supabase INSERT: patient_ref=P${String(Math.floor(Math.random()*9000+1000))}, pred=${isASD?'ASD':'Non-ASD'}, conf=${pct}%`
-  };
-  LOG_ENTRIES.unshift(newEntry);
-  document.getElementById('analyses-count').textContent = ++window._analyses || 176;
+      const res = await fetch(API_URL + '/predict', {
+        method: 'POST',
+        headers: {'Content-Type':'application/json'},
+        body: JSON.stringify({
+          q_scores: qScores, age, gender, jaundice, autism_family: family
+        })
+      });
 
-  /* Add to DB table */
-  const featuresPayload = Object.fromEntries(FEATS.map((f,i)=>[f, i<10 ? qScores[i] : 0]));
-  addDbRow(isASD, rawProb, topFeature, parseFloat(topShap), score, featuresPayload);
+      if (res.ok) {
+        const data = await res.json();
+        rawProb    = data.probability;
+        pred       = data.prediction;
+        topFeature = data.top_feature;
+        topShap    = data.top_shap;
+        limeDict   = data.lime_contributions;
+        fromAPI    = true;
+        addLog('success', 'FastAPI /predict ✓ — ' + pred + ' (' + (rawProb*100).toFixed(1) + '%) via real VQC');
+        addLog('db', 'Supabase INSERT triggered by API — ' + pred);
+        document.getElementById('analyses-count').textContent = ++window._analyses;
+      }
+    } catch(e) {
+      addLog('warn', 'API call failed: ' + e.message + ' — falling back to demo mode');
+    }
+  }
 
-  const panel = document.getElementById('resultPanel');
-  const limeFeats = FEATS.slice(0,8).map((f,i)=>({name:f, val:LIME0[i]*(isASD?1:-1)*rawProb*1.4}));
+  /* ── Fallback: browser heuristic ── */
+  if (!fromAPI) {
+    rawProb    = Math.min(0.95, Math.max(0.05,
+      0.15 + score*0.075 + jaundice*0.05 + family*0.04 + (age<25?0.03:0)
+      + (Math.random()-0.5)*0.08));
+    pred       = rawProb >= 0.5 ? 'ASD' : 'Non-ASD';
+    const tIdx = qScores.indexOf(1) >= 0 ? qScores.indexOf(1) : 1;
+    topFeature = FEATS[tIdx];
+    topShap    = parseFloat((SHAP[tIdx]*rawProb*2).toFixed(4));
+    limeDict   = Object.fromEntries(FEATS.map((f,i)=>[f, LIME0[i]*(rawProb>=0.5?1:-1)*rawProb*1.4]));
+    const featuresPayload = Object.fromEntries(FEATS.map((f,i)=>[f, i<10 ? qScores[i] : 0]));
+    addDbRow(rawProb>=0.5, rawProb, topFeature, topShap, score, featuresPayload);
+    document.getElementById('analyses-count').textContent = ++window._analyses;
+  }
 
+  const isASD = pred === 'ASD';
+  const pct   = (rawProb*100).toFixed(1);
+
+  /* ── Render result panel ── */
   panel.innerHTML = `
     <div class="result-panel">
       <div class="result-header ${isASD?'asd-pos':'asd-neg'}">
         <div>
           <div class="result-title">${isASD?'⚠ ASD Pattern Detected':'✓ Non-ASD Pattern'}</div>
-          <div style="font-size:11px;opacity:0.7;margin-top:3px;font-family:var(--mono)">VQC · ${score}/10 Q-CHAT · ${new Date().toLocaleTimeString()}</div>
+          <div style="font-size:11px;opacity:0.7;margin-top:3px;font-family:var(--mono)">
+            ${fromAPI ? '⚛ FastAPI VQC' : '⚠ Demo mode'} · ${score}/10 Q-CHAT · ${new Date().toLocaleTimeString()}
+          </div>
         </div>
         <div class="result-prob">${pct}%</div>
       </div>
@@ -1230,7 +1294,7 @@ function showResult() {
           LIME Feature Contributions
         </div>
         ${FEATS.slice(0,8).map((f,i)=>{
-          const v = LIME0[i]*(isASD?1:-1)*rawProb*1.4;
+          const v = limeDict ? (limeDict[f]||0) : LIME0[i]*(isASD?1:-1)*rawProb*1.4;
           const pctBar = (Math.abs(v)/0.25*100).toFixed(1);
           const pos = v>=0;
           return `<div class="result-feature-row">
@@ -1240,8 +1304,8 @@ function showResult() {
           </div>`;
         }).join('')}
         <div style="margin-top:14px;padding:10px 12px;background:var(--ivory2);border-radius:7px;display:flex;align-items:center;justify-content:space-between">
-          <span style="font-size:11px;font-family:var(--mono);color:var(--ink3)">Stored in Supabase</span>
-          <span class="tag tag-mint">✓ DB write success</span>
+          <span style="font-size:11px;font-family:var(--mono);color:var(--ink3)">${fromAPI?'Stored via FastAPI → Supabase':'Stored directly in Supabase'}</span>
+          <span class="tag ${fromAPI?'tag-sky':'tag-mint'}">${fromAPI?'⚛ FastAPI':'✓'} DB write success</span>
         </div>
       </div>
     </div>`;
@@ -1546,9 +1610,9 @@ function addLog(type, msg) {
 window.addEventListener('DOMContentLoaded', async ()=>{
   inited.dashboard = true;
   initDashboard();
-  /* Kick off realtime + count on load */
   sbSubscribe();
   sbCount();
+  checkApi();  /* ping FastAPI */
 });
 </script>
 </body>
